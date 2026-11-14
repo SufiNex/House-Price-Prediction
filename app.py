@@ -23,9 +23,30 @@ scaled_X = scaler.fit_transform(X)
 st.sidebar.title('Select House Features🏡')
 st.sidebar.image('https://i.pinimg.com/originals/b1/cf/53/b1cf530756b23930aab499c1a11b443c.gif')
 all_value = []
+
+feature_config = {
+    "MedInc": (0.49, 15.01, 4.0, 0.1),
+    "HouseAge": (1, 52, 30, 1),
+    "AveRooms": (0.84, 141.91, 5.5, 0.1),
+    "AveBedrms": (0.33, 34.07, 1.1, 0.1),
+    "Population": (3, 35682, 1200, 1),
+    "AveOccup": (0.69, 1243.34, 3.0, 0.1),
+    "Latitude": (32.54, 41.95, 37.5, 0.1)
+}
+
 for i in X.columns:
-    value = st.sidebar.slider(f'Select {i} value')
+    min_val, max_val, default, step = feature_config[i]
+
+    value = st.sidebar.slider(
+        f'Select {i} value',
+        min_value=min_val,
+        max_value=max_val,
+        value=default,
+        step=step
+    )
+
     all_value.append(value)
+
 
 final_data = [all_value]
 final_data = scaler.transform(final_data)
@@ -40,9 +61,3 @@ if price:
     with st.spinner('Wait for price prediction....'):
         time.sleep(5)
     st.success(f'Predicted price is: $ {np.abs(round(price*100000,2))}')
-
-
-
-
-
-
