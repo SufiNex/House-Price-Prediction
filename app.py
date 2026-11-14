@@ -6,11 +6,25 @@ from sklearn.preprocessing import MinMaxScaler
 import time
 import numpy as np
 
-st.title('House Price Prediction Using Machine Learning')
+st.title('California House Price Prediction')
 
 st.image('https://miro.medium.com/v2/resize:fit:1400/0*cDRFtpTiOJFrfzS5.jpg')
 
-st.write('''Our project, House Price Prediction Using Machine Learning, aims to predict house prices based on various factors such as location, area, number of bedrooms, bathrooms, and other property features. We use machine learning algorithms to analyze housing data, identify patterns, and generate accurate price predictions. This project helps users make better decisions when buying or selling properties.''')
+st.write('''This application uses Machine Learning to predict estimated house prices in California based on various housing-related features.
+
+Users can enter details such as median income, house age, average rooms, average bedrooms, population, average occupancy, and latitude to get an estimated house price.
+
+The application is built using Python and Scikit-learn, with a Linear Regression model for prediction and Streamlit for the interactive user interface.
+
+### Key Features
+
+- Predicts estimated California house prices.
+- Interactive input sliders for housing features.
+- Machine Learning-based price prediction.
+- Simple and user-friendly interface.
+- Displays the predicted house value in USD.
+
+**Technologies Used:** Python, Pandas, NumPy, Scikit-learn, Streamlit, and Pickle.''')
 
 data = fetch_california_housing()
 df = pd.DataFrame(data.data, columns = data.feature_names)
