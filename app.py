@@ -1,42 +1,77 @@
+
 import streamlit as st
 import pandas as pd
-from sklearn.datasets import fetch_california_housing
-import pickle
-from sklearn.preprocessing import MinMaxScaler
-import time
 import numpy as np
+import pickle
 
-st.title('California House Price Prediction')
+from sklearn.datasets import fetch_california_housing
+from sklearn.preprocessing import MinMaxScaler
 
-st.image('https://miro.medium.com/v2/resize:fit:1400/0*cDRFtpTiOJFrfzS5.jpg')
 
-st.write('''This application uses Machine Learning to predict estimated house prices in California based on various housing-related features.
+# --------------------------------------------------
+# PAGE CONFIGURATION
+# --------------------------------------------------
 
-Users can enter details such as median income, house age, average rooms, average bedrooms, population, average occupancy, and latitude to get an estimated house price.
+st.set_page_config(
+    page_title="California House Price Prediction",
+    page_icon="🏡",
+    layout="wide"
+)
 
-The application is built using Python and Scikit-learn, with a Linear Regression model for prediction and Streamlit for the interactive user interface.
 
-### Key Features
+# --------------------------------------------------
+# MAIN TITLE
+# --------------------------------------------------
 
-- Predicts estimated California house prices.
-- Interactive input sliders for housing features.
-- Machine Learning-based price prediction.
-- Simple and user-friendly interface.
-- Displays the predicted house value in USD.
+st.title("🏡 California House Price Prediction")
 
-**Technologies Used:** Python, Pandas, NumPy, Scikit-learn, Streamlit, and Pickle.''')
+st.caption(
+    "Machine Learning Based House Price Prediction Application"
+)
+
+
+# --------------------------------------------------
+# LOAD DATASET AND SCALER
+# --------------------------------------------------
 
 data = fetch_california_housing()
-df = pd.DataFrame(data.data, columns = data.feature_names)
-df['MedHouseVal'] = data.target
 
-X = df.iloc[:, :-2]
+df = pd.DataFrame(
+    data.data,
+    columns=data.feature_names
+)
+
+df["MedHouseVal"] = data.target
+
+
+# Using the same seven features as the existing app
+
+feature_columns = [
+    "MedInc",
+    "HouseAge",
+    "AveRooms",
+    "AveBedrms",
+    "Population",
+    "AveOccup",
+    "Latitude"
+]
+
+X = df[feature_columns]
+
 scaler = MinMaxScaler()
-scaled_X = scaler.fit_transform(X)
+scaler.fit(X)
 
-st.sidebar.title('Select House Features🏡')
-st.sidebar.image('https://i.pinimg.com/originals/b1/cf/53/b1cf530756b23930aab499c1a11b443c.gif')
-all_value = []
+
+# --------------------------------------------------
+# SIDEBAR - HOUSE FEATURES
+# --------------------------------------------------
+
+st.sidebar.title("Select House Features 🏡")
+
+st.sidebar.image(
+    "https://i.pinimg.com/originals/b1/cf/53/b1cf530756b23930aab499c1a11b443c.gif",
+    use_container_width=True
+)
 
 feature_config = {
     "MedInc": (0.49, 15.01, 4.0, 0.1),
@@ -48,30 +83,117 @@ feature_config = {
     "Latitude": (32.54, 41.95, 37.5, 0.1)
 }
 
-for i in X.columns:
-    min_val, max_val, default, step = feature_config[i]
+all_values = []
+
+for feature in feature_columns:
+
+    min_val, max_val, default, step = feature_config[feature]
 
     value = st.sidebar.slider(
-        f'Select {i} value',
+        f"Select {feature} value",
         min_value=min_val,
         max_value=max_val,
         value=default,
         step=step
     )
 
-    all_value.append(value)
+    all_values.append(value)
 
 
-final_data = [all_value]
-final_data = scaler.transform(final_data)
+# --------------------------------------------------
+# MODEL LOADING
+# --------------------------------------------------
 
-with open('chatgpt_for_house.pkl', 'rb') as f:
-    chatgpt = pickle.load(f)
-print('Model Loaded Successfully!!!')
+try:
+    with open("chatgpt_for_house.pkl", "rb") as f:
+        model = pickle.load(f)
 
-price = chatgpt.predict(final_data)[0]
+except FileNotFoundError:
+    st.error("Model file chatgpt_for_house.pkl was not found.")
+    st.stop()
 
-if price:
-    with st.spinner('Wait for price prediction....'):
-        time.sleep(5)
-    st.success(f'Predicted price is: $ {np.abs(round(price*100000,2))}')
+
+# --------------------------------------------------
+# HOUSE PRICE PREDICTION
+# --------------------------------------------------
+
+input_data = pd.DataFrame(
+    [all_values],
+    columns=feature_columns
+)
+
+scaled_input = scaler.transform(input_data)
+
+prediction = model.predict(scaled_input)[0]
+
+predicted_price = float(prediction) * 100000
+
+
+# --------------------------------------------------
+# MAIN PAGE DESIGN
+# --------------------------------------------------
+
+left_col, right_col = st.columns(
+    [1, 1],
+    gap="large"
+)
+
+
+# LEFT SIDE - HOUSE IMAGE
+
+with left_col:
+
+    st.image(
+        "https://miro.medium.com/v2/resize:fit:1400/0*cDRFtpTiOJFrfzS5.jpg",
+        use_container_width=True
+    )
+
+    st.caption("California Residential Housing")
+
+
+# RIGHT SIDE - PROJECT DESCRIPTION
+
+with right_col:
+
+    st.subheader("📌 About This Project")
+
+    st.write(
+        "This application uses Machine Learning to predict "
+        "estimated house prices in California based on "
+        "various housing-related features."
+    )
+
+    st.write(
+        "Users can enter details such as median income, "
+        "house age, average rooms, average bedrooms, "
+        "population, average occupancy, and latitude "
+        "to get an estimated house price."
+    )
+
+    with st.expander("View Project Details"):
+
+        st.markdown("""
+        ### Key Features
+
+        - Predicts estimated California house prices.
+        - Interactive input sliders for housing features.
+        - Machine Learning-based price prediction.
+        - Simple and user-friendly interface.
+        - Displays the predicted house value in USD.
+
+        **Technologies Used:**
+
+        Python, Pandas, NumPy, Scikit-learn,
+        Streamlit, and Pickle.
+        """)
+
+    st.divider()
+
+    st.subheader("💰 House Price Prediction")
+
+    st.metric(
+        label="Estimated House Price",
+        value=f"${predicted_price:,.2f}"
+    )
+
+    st.success("House price prediction completed successfully!")
